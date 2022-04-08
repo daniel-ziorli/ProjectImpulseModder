@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 619c15ae94b64ae4591aaff14e53ccb3
+  m_SerializeEntries:
+  - m_GUID: 99c9720ab356a0642a771bea13969a05
+    m_Address: Assets/Scenes/Drew.unity
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Map
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fb6dcf8a41a0a1a4ca5a0a987054d65e, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 46d8cc1a4808f994c85b1e11de980d8c, type: 2}
+    - {fileID: 11400000, guid: 187098020c3229748a791ca030ceac59, type: 2}
