@@ -18,7 +18,7 @@ MonoBehaviour:
   m_GUID: 619c15ae94b64ae4591aaff14e53ccb3
   m_SerializeEntries:
   - m_GUID: 99c9720ab356a0642a771bea13969a05
-    m_Address: Assets/Scenes/Drew.unity
+    m_Address: Assets/_Project/Scenes/Test.unity
     m_ReadOnly: 0
     m_SerializedLabels:
     - Map

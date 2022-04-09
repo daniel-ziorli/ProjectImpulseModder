@@ -64,16 +64,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  weapons:
-  - weaponName: Pistol
-    spawnWeapon: 0
-    weaponIndex: 2
-  - weaponName: Mac10
-    spawnWeapon: 1
-    weaponIndex: 3
-  - weaponName: Shotgun
-    spawnWeapon: 1
-    weaponIndex: 4
+  weaponIds: 0300000004000000
   weaponPrefabs: []
   spawnOnRoundStart: 1
   weaponRespawnTime: 30

@@ -10,8 +10,10 @@ using System.IO;
 
 public class ProjectImpulseMapEditor : EditorWindow {
     string mapName = "";
-    bool customExportPath = false;
+    bool useCustomPath = false;
     string exportPath = "";
+    string customExportPath = "";
+
     string scenePath = "";
     private static AddressableAssetSettings settings;
 
@@ -26,11 +28,13 @@ public class ProjectImpulseMapEditor : EditorWindow {
         scenePath = EditorGUILayout.TextField("Scene Path: ", scenePath);
 
         GUILayout.Label("Export Path: " + exportPath);
-        customExportPath = EditorGUILayout.Toggle("Use Custom Export Path", customExportPath);
-        if (customExportPath)
-            exportPath = EditorGUILayout.TextField("Export Path: ", exportPath);
-        else
-            exportPath = UnityEngine.Application.dataPath + "/Export/" + mapName;
+        useCustomPath = EditorGUILayout.Toggle("Use Custom Export Path", useCustomPath);
+        if (useCustomPath) {
+            customExportPath = EditorGUILayout.TextField("Export Path: ", customExportPath);
+            exportPath = (customExportPath + "/" + mapName).Replace(" ", "");
+        } else {
+            exportPath = (UnityEngine.Application.dataPath + "/Export/" + mapName).Replace(" ", "");
+        }
 
         if (GUILayout.Button("Export Map"))
             ExportMap();
@@ -39,14 +43,14 @@ public class ProjectImpulseMapEditor : EditorWindow {
     private void ExportMap() {
         AddScene(scenePath);
         bool success = BuildAddressable();
-        if(!success)
+        if (!success)
             return;
 
         DeleteFolder(exportPath);
         CreateFolder(exportPath);
 
         CreateConfig();
-        
+
         var info = new DirectoryInfo(UnityEngine.Application.dataPath + "/Export");
         var fileInfo = info.GetFiles();
         foreach (var file in fileInfo)
@@ -72,7 +76,7 @@ public class ProjectImpulseMapEditor : EditorWindow {
         if (!Directory.Exists(path))
             return;
         string[] files = Directory.GetFiles(path);
-        foreach(string file in files)
+        foreach (string file in files)
             File.Delete(file);
 
         Directory.Delete(path);

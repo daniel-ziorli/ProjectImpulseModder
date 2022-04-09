@@ -1,21 +1,12 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
-using System;
-using MEC;
-
-[Serializable]
-public class WeaponData {
-    public string weaponName;
-    public bool spawnWeapon;
-    public int weaponIndex;
-}
 
 public class ProjectImpulseWeaponSpawner : NetworkBehaviour {
-    [SerializeField]
-    public List<WeaponData> weapons;
-    public List<GameObject> weaponPrefabs = new List<GameObject>();
+
+    [Tooltip("Weapon Id refers to which weapons can be spawned\nPistol=2\nMac10=3\nShotgun=4")]
+    public List<int> weaponIds;
+    private List<GameObject> weaponPrefabs = new List<GameObject>();
 
     public bool spawnOnRoundStart = true;
     public float weaponRespawnTime = 30;
@@ -27,4 +18,6 @@ public class ProjectImpulseWeaponSpawner : NetworkBehaviour {
     private Quaternion spawnRotation;
     private GameObject newestWeaponSpawn;
     private bool isInitialized = false;
+
+    
 }
