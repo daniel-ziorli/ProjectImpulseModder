@@ -59,7 +59,7 @@ MonoBehaviour:
       - m_Id: a19be5840603af04a88979b91c55b259
         m_Value: '[UnityEngine.Application.dataPath]/Export'
       - m_Id: a2da803d9e6f92046a0ed2f92deca4b1
-        m_Value: '{UnityEngine.Application.dataPath}/Maps/TestMap'
+        m_Value: '{UnityEngine.Application.dataPath}/Maps/Test'
       - m_Id: adcae911480da0b4fa48dcc78bfdd754
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: 2d134ef80099bc947ac7b9f2f9e9d015
