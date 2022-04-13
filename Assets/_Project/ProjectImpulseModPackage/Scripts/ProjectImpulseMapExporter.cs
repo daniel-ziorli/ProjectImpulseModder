@@ -9,7 +9,7 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System.IO;
 
-public class ProjectImpulseMapEditor : EditorWindow {
+public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
     string exportPath = "";
     string customExportPath = "";
@@ -21,7 +21,7 @@ public class ProjectImpulseMapEditor : EditorWindow {
 
     [MenuItem("Project Impulse/Map Exporter")]
     public static void ShowMapWindow() {
-        GetWindow<ProjectImpulseMapEditor>("Map Exporter");
+        GetWindow<ProjectImpulseMapExporter>("Map Exporter");
     }
     private void Awake() {
         scenePath = EditorSceneManager.GetActiveScene().path;
@@ -47,7 +47,7 @@ public class ProjectImpulseMapEditor : EditorWindow {
         DrawUILine(Color.grey);
 
         if (GUILayout.Button("Export Map", GUILayout.Height(40))) {
-            if (!ValidateFeilds())
+            if (!ValidateFeilds() || !ValidateScene())
                 return;
 
             ExportMap();
@@ -61,8 +61,8 @@ public class ProjectImpulseMapEditor : EditorWindow {
 
     private void SceneSettings() {
         GUILayout.BeginHorizontal();
-        scenePath = EditorGUILayout.TextField("Scene Path: ", scenePath);
-        if (GUILayout.Button("Get Current Scene Path", GUILayout.Width(180)))
+        GUILayout.Label("Scene Path: " + scenePath, EditorStyles.whiteLabel);
+        if (GUILayout.Button("Update Scene Path", GUILayout.Width(150)))
             scenePath = EditorSceneManager.GetActiveScene().path;
         GUILayout.EndHorizontal();
     }
@@ -97,12 +97,12 @@ public class ProjectImpulseMapEditor : EditorWindow {
         }
 
         if (mapName.Contains("/") || mapName.Contains(@"\")) {
-            DisplayError("Error Invalid Map Name", @"Map name can not contain characters '/' or '\' please remove these characters");
+            DisplayError("Error Invalid Map Name", @"Map name can not contain characters '/' or '\' please remove these characters.");
             return false;
         }
 
         if (mapName == "") {
-            DisplayError("Error Invalid Map Name", "Please enter a valid map name");
+            DisplayError("Error Invalid Map Name", "Please enter a valid map name.");
             return false;
         }
 
@@ -114,8 +114,38 @@ public class ProjectImpulseMapEditor : EditorWindow {
         return true;
     }
 
+    private bool ValidateScene() {
+        if (!Object.FindObjectOfType<ProjectImpulseDeathZone>()) {
+            DisplayError("Error No Death Zone In Scene", "Please go to the project impulse mod package, under the prefab section add the 'Death Zone' prefab to your scene.");
+            return false;
+        }
+
+        Object[] playerSpawnPoints = FindObjectsOfType<ProjectImpulsePlayerSpawnPoint>();
+        if (playerSpawnPoints.Length == 0) {
+            DisplayError("Error No Player Spawn Points", "Please go to the project impulse mod package, under the prefab section add the 'Player Spawn Point' prefab to your scene. We recomend at least 10 but more is better.");
+            return false;
+        }
+
+        if (playerSpawnPoints.Length < 10) {
+            if(!DisplayWarning("Warning Not Enough Player Spawn Points", "You have less than 10 spawn points in your scene we recomend at least 10 but more is better."))
+                return false;
+        }
+
+        Object[] weaponSpawnPoints = FindObjectsOfType<ProjectImpulseWeaponSpawner>();
+        if (weaponSpawnPoints.Length == 0) {
+            if (!DisplayWarning("Warning No Weapon Spawners", "You have no weapon spawners in your scene. If you would like weapons in your level please go to the project impulse mod package, under the prefab section and add a 'WeaponSpawnPoint' to you scene."))
+                return false;
+        }
+  
+        return true;
+    }
+
     private void DisplayError(string title, string error) {
         EditorUtility.DisplayDialog(title, error, "Ok", "");
+    }
+
+    private bool DisplayWarning(string title, string warning) {
+        return EditorUtility.DisplayDialog(title, warning, "Continue", "Cancel");
     }
 
     public static void DrawUILine(Color color, int thickness = 2, int padding = 10) {
@@ -129,8 +159,7 @@ public class ProjectImpulseMapEditor : EditorWindow {
 
     private void ExportMap() {
         AddScene(scenePath);
-        bool success = BuildAddressable();
-        if (!success)
+        if (!BuildAddressable())
             return;
 
         DeleteFolder(exportPath);
