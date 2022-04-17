@@ -15,7 +15,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
     string basePath = "";
     string exportPath = "";
-    string customBasePath = "";
     string scenePath = "";
     bool showMapSettings = true;
     bool showSceneSettings = true;
@@ -35,8 +34,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
         scenePath = EditorSceneManager.GetActiveScene().path;
         mapName = EditorPrefs.GetString("MapName", "Your Map Name");
         exportPath = ""; //FormatPath(UnityEngine.Application.dataPath + "/Export/" + mapName);
-        basePath = FormatPath(UnityEngine.Application.dataPath + "/Export");
-        customBasePath = EditorPrefs.GetString("CustomBasePath", "");
+        basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Export");
         openAfterExport = EditorPrefs.GetBool("OpenAfterExport", false);
 
         if (allGamemodes.Count != 0)
@@ -115,25 +113,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
 
     private void ExportSettings() {
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Set Custom Export Path")) {
-            customBasePath = EditorUtility.OpenFolderPanel("Set Custom Export Path", EditorPrefs.GetString("CustomBasePath", ""), "");
-            EditorPrefs.SetString("CustomBasePath", customBasePath);
-        }
-
-        if (GUILayout.Button("Reset Export Path")) {
-            customBasePath = "";
-            basePath = FormatPath(UnityEngine.Application.dataPath + "/Export");
-        }
-
-        if (customBasePath == "")
-            basePath = FormatPath(UnityEngine.Application.dataPath + "/Export");
-        else
-            basePath = FormatPath(customBasePath);
-
+        basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Maps");
         exportPath = FormatPath(basePath + "/" + mapName);
-
-        GUILayout.EndHorizontal();
 
         if (GUILayout.Button("Open Export Folder"))
             EditorUtility.RevealInFinder(basePath + "/");
@@ -222,9 +203,15 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
         var info = new DirectoryInfo(UnityEngine.Application.dataPath + "/Export");
         var fileInfo = info.GetFiles();
-        foreach (var file in fileInfo)
+        foreach (var file in fileInfo) {
+            string[] splitFileName = file.Name.Split(".");
+            if (splitFileName[splitFileName.Length - 1] == "meta") {
+                File.Delete(file.FullName);
+                continue;
+            }
             if (file.Name.Split(".").Length >= 2)
                 File.Move(file.FullName, exportPath + "/" + file.Name);
+        }
 
         if (openAfterExport)
             EditorUtility.RevealInFinder(exportPath);
@@ -232,7 +219,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private bool BuildAddressable() {
-        AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(AddressableAssetSettingsDefaultObject.Settings.activeProfileId, "Local.LoadPath", "{UnityEngine.Application.dataPath}/Maps/" + FormatPath(mapName));
+        //AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(AddressableAssetSettingsDefaultObject.Settings.activeProfileId, "Local.BuildPath", "[UnityEngine.Application.persistentDataPath]/Maps/" + FormatPath(mapName));
+        AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(AddressableAssetSettingsDefaultObject.Settings.activeProfileId, "Local.LoadPath", "{UnityEngine.Application.persistentDataPath}/Maps/" + FormatPath(mapName));
         AddressableAssetSettings.CleanPlayerContent();
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
         bool success = string.IsNullOrEmpty(result.Error);
@@ -248,7 +236,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
         for (int i = 0; i < gamemodes.Count; i++)
             configContent += gamemodes[i] + (i == gamemodes.Count - 1 ? "\n" : ",");
 
-        File.WriteAllText(FormatPath(UnityEngine.Application.dataPath + "/Export/" + mapName + "Config.cfg"), configContent);
+        File.WriteAllText(FormatPath(exportPath + "/" + mapName + "Config.cfg"), configContent);
     }
 
     public void AddScene(string path) {
