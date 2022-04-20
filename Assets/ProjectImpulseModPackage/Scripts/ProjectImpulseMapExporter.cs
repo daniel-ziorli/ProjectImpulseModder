@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Build;
@@ -10,6 +9,9 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System.IO;
 using System;
+using Unity.EditorCoroutines.Editor;
+using System.Collections;
+using UnityEditor.Compilation;
 
 public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
@@ -20,6 +22,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
     bool showSceneSettings = true;
     bool showExportSettings = true;
     bool showConfiguredGamemodes = true;
+    bool showPlatforms = true;
+
 
     bool openAfterExport;
 
@@ -36,9 +40,13 @@ public class ProjectImpulseMapExporter : EditorWindow {
         exportPath = ""; //FormatPath(UnityEngine.Application.dataPath + "/Export/" + mapName);
         basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Export");
         openAfterExport = EditorPrefs.GetBool("OpenAfterExport", false);
+    }
 
-        if (allGamemodes.Count != 0)
-            return;
+    void LoadGamemodes() {
+        Dictionary<string, bool> temp = null;
+        if (allGamemodes != null)
+            temp = new Dictionary<string, bool>(allGamemodes);
+        allGamemodes = new Dictionary<string, bool>();
         UnityEngine.Object[] gamemodeValidators = Resources.LoadAll("GamemodeValidators");
         foreach (UnityEngine.Object validatorObject in gamemodeValidators) {
             GameObject go = new GameObject(validatorObject.name);
@@ -46,12 +54,18 @@ public class ProjectImpulseMapExporter : EditorWindow {
             Validator validator = go.GetComponent<Validator>();
             string gamemode = validator.GetGamemode();
             DestroyImmediate(go);
-            if (gamemode != null && gamemode != "")
+            if (gamemode == "" || gamemode == null)
+                continue;
+            if (temp != null && temp.Keys.Contains(gamemode))
+                allGamemodes[gamemode] = temp[gamemode];
+            else
                 allGamemodes[gamemode] = true;
         }
     }
 
     private void OnGUI() {
+        LoadGamemodes();
+
         EditorGUIUtility.labelWidth = 80;
         GUILayout.Label("Project Impulse Map Exporter", EditorStyles.largeLabel);
         GUILayout.Space(10);
@@ -66,15 +80,31 @@ public class ProjectImpulseMapExporter : EditorWindow {
         if (showExportSettings = EditorGUILayout.Foldout(showExportSettings, "Export Settings")) ExportSettings();
         DrawUILine(Color.grey);
 
-        if (GUILayout.Button("Export Map", GUILayout.Height(40))) {
+        if (GUILayout.Button("Build Windows", GUILayout.Height(40))) {
+
             if (!ValidateFeilds() || !ValidateScene())
                 return;
 
-            ExportMap();
+            CreateConfig(configuredGamemodes);
+            ExportWindows();
+
+            if (openAfterExport)
+                EditorUtility.RevealInFinder(exportPath);
+        }
+
+        if (GUILayout.Button("Build Android", GUILayout.Height(40))) {
+
+            if (!ValidateFeilds() || !ValidateScene())
+                return;
+
+            CreateConfig(configuredGamemodes);
+            ExportAndroid();
+
+            if (openAfterExport)
+                EditorUtility.RevealInFinder(exportPath);
         }
     }
 
-    Rect buttonRect;
     private void MapSettings() {
         mapName = EditorGUILayout.TextField("Map Name: ", mapName);
         EditorPrefs.SetString("MapName", mapName);
@@ -179,7 +209,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
                 configuredGamemodes.Add(validator.gamemode);
             DestroyImmediate(go);
         }
-
         return true;
     }
 
@@ -191,43 +220,65 @@ public class ProjectImpulseMapExporter : EditorWindow {
         return EditorUtility.DisplayDialog(title, warning, "Continue", "Cancel");
     }
 
-    private void ExportMap() {
-        AddScene(scenePath);
-        if (!BuildAddressable())
-            return;
-
-        DeleteFolder(exportPath);
-        CreateFolder(exportPath);
-
-        CreateConfig(configuredGamemodes);
-
-        var info = new DirectoryInfo(UnityEngine.Application.dataPath + "/Export");
-        var fileInfo = info.GetFiles();
-        foreach (var file in fileInfo) {
-            string[] splitFileName = file.Name.Split(".");
-            if (splitFileName[splitFileName.Length - 1] == "meta") {
-                File.Delete(file.FullName);
-                continue;
-            }
-            if (file.Name.Split(".").Length >= 2)
-                File.Move(file.FullName, exportPath + "/" + file.Name);
-        }
-
-        if (openAfterExport)
-            EditorUtility.RevealInFinder(exportPath);
-        AssetDatabase.Refresh();
+    void ExportWindows() {
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows);
+        EditorUserBuildSettings.selectedStandaloneTarget = BuildTarget.StandaloneWindows64;
+        BuildAddressable();
     }
 
-    private bool BuildAddressable() {
-        //AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(AddressableAssetSettingsDefaultObject.Settings.activeProfileId, "Local.BuildPath", "[UnityEngine.Application.persistentDataPath]/Maps/" + FormatPath(mapName));
-        AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(AddressableAssetSettingsDefaultObject.Settings.activeProfileId, "Local.LoadPath", "{UnityEngine.Application.persistentDataPath}/Maps/" + FormatPath(mapName));
-        AddressableAssetSettings.CleanPlayerContent();
+    void ExportMac() {
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneOSX);
+        EditorUserBuildSettings.selectedStandaloneTarget = BuildTarget.StandaloneOSX;
+        BuildAddressable();
+    }
+
+    void ExportLinux() {
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneOSX);
+        EditorUserBuildSettings.selectedStandaloneTarget = BuildTarget.StandaloneOSX;
+        BuildAddressable();
+    }
+
+    void ExportAndroid() {
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+        EditorUserBuildSettings.selectedStandaloneTarget = BuildTarget.Android;
+        BuildAddressable();
+    }
+
+    private void BuildAddressable(object obj = null) {
+        var group = AddressableAssetSettingsDefaultObject.Settings.FindGroup("Default Local Group");
+        var guid = AssetDatabase.AssetPathToGUID(scenePath);
+        if (group == null || guid == null)
+            return;
+
+        foreach (AddressableAssetEntry entry in group.entries.ToList())
+            group.RemoveAssetEntry(entry);
+
+        var e = AddressableAssetSettingsDefaultObject.Settings.CreateOrMoveEntry(guid, group, false, false);
+        var entriesAdded = new List<AddressableAssetEntry> { e };
+        e.SetLabel("Map", true, true, false);
+
+        group.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entriesAdded, false, true);
+        AddressableAssetSettingsDefaultObject.Settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entriesAdded, true, false);
+
+        AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
+            AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
+            "Local.LoadPath",
+            "{UnityEngine.Application.persistentDataPath}/Maps/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+        );
+
+        AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
+            AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
+            "Local.BuildPath",
+            Application.persistentDataPath + "/Maps/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+        );
+        AddressableAssetSettings.CleanPlayerContent(AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilder);
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
-        bool success = string.IsNullOrEmpty(result.Error);
-        return success;
     }
 
     private void CreateConfig(List<string> gamemodes) {
+        if (!File.Exists(exportPath))
+            CreateFolder(exportPath);
+
         string configContent = "\n//WARNING EDITING THIS FILE MAY RESULT IN ERRORS\n\n";
         configContent += "// name is the name of the map \n";
         configContent += "name=" + mapName + "\n";
@@ -237,28 +288,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
             configContent += gamemodes[i] + (i == gamemodes.Count - 1 ? "\n" : ",");
 
         File.WriteAllText(FormatPath(exportPath + "/" + mapName + "Config.cfg"), configContent);
-    }
-
-    public void AddScene(string path) {
-        var settings = AddressableAssetSettingsDefaultObject.Settings;
-
-        if (!settings)
-            return;
-
-        var group = settings.FindGroup("Default Local Group");
-        var guid = AssetDatabase.AssetPathToGUID(path);
-        if (group == null || guid == null)
-            return;
-
-        foreach (AddressableAssetEntry entry in group.entries.ToList())
-            group.RemoveAssetEntry(entry);
-
-        var e = settings.CreateOrMoveEntry(guid, group, false, false);
-        var entriesAdded = new List<AddressableAssetEntry> { e };
-        e.SetLabel("Map", true, true, false);
-
-        group.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entriesAdded, false, true);
-        settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entriesAdded, true, false);
     }
 
     private void DeleteFolder(string path) {
