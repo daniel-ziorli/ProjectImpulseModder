@@ -9,9 +9,7 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System.IO;
 using System;
-using Unity.EditorCoroutines.Editor;
-using System.Collections;
-using UnityEditor.Compilation;
+using ModIO;
 
 public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
@@ -23,8 +21,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
     bool showExportSettings = true;
     bool showConfiguredGamemodes = true;
     bool showPlatforms = true;
-
-
     bool openAfterExport;
 
     List<string> configuredGamemodes = new List<string>();
@@ -103,6 +99,14 @@ public class ProjectImpulseMapExporter : EditorWindow {
             if (openAfterExport)
                 EditorUtility.RevealInFinder(exportPath);
         }
+
+        if (GUILayout.Button("Upload Map", GUILayout.Height(40))) {
+
+            if (!ValidateFeilds() || !ValidateScene())
+                return;
+
+            UploadMap();
+        }
     }
 
     private void MapSettings() {
@@ -143,7 +147,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
 
     private void ExportSettings() {
-        basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Maps");
+        basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Mods");
         exportPath = FormatPath(basePath + "/" + mapName);
 
         if (GUILayout.Button("Open Export Folder"))
@@ -263,13 +267,13 @@ public class ProjectImpulseMapExporter : EditorWindow {
         AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
             AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
             "Local.LoadPath",
-            "{UnityEngine.Application.persistentDataPath}/Maps/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+            "{UnityEngine.Application.persistentDataPath}/Mods/{LOCAL_FILE_NAME}/" + EditorUserBuildSettings.selectedStandaloneTarget
         );
 
         AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
             AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
             "Local.BuildPath",
-            Application.persistentDataPath + "/Maps/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+            Application.persistentDataPath + "/Mods/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
         );
         AddressableAssetSettings.CleanPlayerContent(AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilder);
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
@@ -280,6 +284,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
             CreateFolder(exportPath);
 
         string configContent = "\n//WARNING EDITING THIS FILE MAY RESULT IN ERRORS\n\n";
+        configContent += "// type represents the type of mod \n";
+        configContent += "type=Map\n";
         configContent += "// name is the name of the map \n";
         configContent += "name=" + mapName + "\n";
         configContent += "// gamemodes is a list of gamemodes that this map is configured for\n";
@@ -288,6 +294,18 @@ public class ProjectImpulseMapExporter : EditorWindow {
             configContent += gamemodes[i] + (i == gamemodes.Count - 1 ? "\n" : ",");
 
         File.WriteAllText(FormatPath(exportPath + "/" + mapName + "Config.cfg"), configContent);
+    }
+
+    private void UploadMap() {
+        // EditableModfile modBuildInformation = new EditableModfile();
+        // modBuildInformation.version.value = "1.0.0";
+        // modBuildInformation.version.isDirty = true;
+
+        // ModManager.UploadModBinaryDirectory(modId,
+        //                                     modBuildInformation,
+        //                                     true, // set as the current build
+        //                                     (modfile) => OnUploaded(modfile),
+        //                                     (e) => OnError(e));
     }
 
     private void DeleteFolder(string path) {
