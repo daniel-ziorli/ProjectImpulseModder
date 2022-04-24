@@ -10,6 +10,7 @@ using System.Linq;
 using System.IO;
 using System;
 using ModIO;
+using ModIO.EditorCode;
 
 public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
@@ -26,6 +27,9 @@ public class ProjectImpulseMapExporter : EditorWindow {
     List<string> configuredGamemodes = new List<string>();
     Dictionary<string, bool> allGamemodes = new Dictionary<string, bool>();
 
+    private UserProfile user;
+    private static bool isAwaitingServerResponse = false;
+
     [MenuItem("Project Impulse/Map Exporter")]
     public static void ShowMapWindow() {
         GetWindow<ProjectImpulseMapExporter>("Map Exporter");
@@ -33,9 +37,30 @@ public class ProjectImpulseMapExporter : EditorWindow {
     private void Awake() {
         scenePath = EditorSceneManager.GetActiveScene().path;
         mapName = EditorPrefs.GetString("MapName", "Your Map Name");
-        exportPath = ""; //FormatPath(UnityEngine.Application.dataPath + "/Export/" + mapName);
+        exportPath = "";
         basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Export");
         openAfterExport = EditorPrefs.GetBool("OpenAfterExport", false);
+    }
+
+    private void OnEnable() {
+        if (LocalUser.AuthenticationState == AuthenticationState.ValidToken) {
+            ModManager.GetAuthenticatedUserProfile((userProfile) => {
+                this.user = userProfile;
+                Repaint();
+            },
+            null);
+        }
+
+        LoginWindow.userLoggedIn += OnUserLogin;
+    }
+
+    protected virtual void OnDisable() {
+        LoginWindow.userLoggedIn -= OnUserLogin;
+    }
+
+    protected virtual void OnUserLogin(UserProfile userProfile) {
+        this.OnDisable();
+        this.OnEnable();
     }
 
     void LoadGamemodes() {
@@ -62,9 +87,11 @@ public class ProjectImpulseMapExporter : EditorWindow {
     private void OnGUI() {
         LoadGamemodes();
 
+        LoginUI();
         EditorGUIUtility.labelWidth = 80;
         GUILayout.Label("Project Impulse Map Exporter", EditorStyles.largeLabel);
         GUILayout.Space(10);
+
 
         if (showMapSettings = EditorGUILayout.Foldout(showMapSettings, "Map Settings")) MapSettings();
         DrawUILine(Color.grey);
@@ -107,6 +134,40 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
             UploadMap();
         }
+    }
+
+    protected virtual void Update() {
+        if (user != null && user.id != LocalUser.Profile.id) {
+            user = null;
+            Repaint();
+        }
+    }
+
+    private void LoginUI() {
+        EditorGUILayout.BeginHorizontal();
+        if (this.user == null) {
+            EditorGUILayout.LabelField("Not logged in to mod.io");
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Log In")) {
+                LoginWindow.GetWindow<LoginWindow>("Login to mod.io");
+            }
+        } else {
+            EditorGUILayout.LabelField("Logged in as:  " + this.user.username);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Log Out")) {
+                EditorApplication.delayCall += () => {
+                    if (EditorDialogs.ConfirmLogOut(this.user.username)) {
+                        this.user = null;
+
+                        LocalUser.instance = new LocalUser();
+                        LocalUser.Save();
+
+                        Repaint();
+                    }
+                };
+            }
+        }
+        EditorGUILayout.EndHorizontal();
     }
 
     private void MapSettings() {
@@ -331,4 +392,5 @@ public class ProjectImpulseMapExporter : EditorWindow {
         EditorGUI.DrawRect(r, color);
     }
 }
+
 #endif
