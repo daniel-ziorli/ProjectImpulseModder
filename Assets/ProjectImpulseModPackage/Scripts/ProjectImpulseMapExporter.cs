@@ -25,10 +25,14 @@ public class ProjectImpulseMapExporter : EditorWindow {
     bool openAfterExport;
 
     List<string> configuredGamemodes = new List<string>();
-    Dictionary<string, bool> allGamemodes = new Dictionary<string, bool>();
+    List<string> configuredPlatforms = new List<string> { "Windows", "Android" };
+
 
     private UserProfile user;
     private static bool isAwaitingServerResponse = false;
+    private ScriptableModProfile profile;
+    private EditableModfile buildProfile;
+
 
     [MenuItem("Project Impulse/Map Exporter")]
     public static void ShowMapWindow() {
@@ -36,13 +40,15 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
     private void Awake() {
         scenePath = EditorSceneManager.GetActiveScene().path;
-        mapName = EditorPrefs.GetString("MapName", "Your Map Name");
         exportPath = "";
         basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Export");
         openAfterExport = EditorPrefs.GetBool("OpenAfterExport", false);
     }
 
     private void OnEnable() {
+        buildProfile = new EditableModfile();
+        buildProfile.version.value = "0.0.0";
+
         if (LocalUser.AuthenticationState == AuthenticationState.ValidToken) {
             ModManager.GetAuthenticatedUserProfile((userProfile) => {
                 this.user = userProfile;
@@ -63,11 +69,13 @@ public class ProjectImpulseMapExporter : EditorWindow {
         this.OnEnable();
     }
 
-    void LoadGamemodes() {
-        Dictionary<string, bool> temp = null;
-        if (allGamemodes != null)
-            temp = new Dictionary<string, bool>(allGamemodes);
-        allGamemodes = new Dictionary<string, bool>();
+    void LoadConfiguredGamemodes() {
+
+        if (!profile)
+            return;
+
+        string[] tags = profile.editableModProfile.tags.value;
+        configuredGamemodes = new List<string>();
         UnityEngine.Object[] gamemodeValidators = Resources.LoadAll("GamemodeValidators");
         foreach (UnityEngine.Object validatorObject in gamemodeValidators) {
             GameObject go = new GameObject(validatorObject.name);
@@ -77,68 +85,105 @@ public class ProjectImpulseMapExporter : EditorWindow {
             DestroyImmediate(go);
             if (gamemode == "" || gamemode == null)
                 continue;
-            if (temp != null && temp.Keys.Contains(gamemode))
-                allGamemodes[gamemode] = temp[gamemode];
-            else
-                allGamemodes[gamemode] = true;
+
+            foreach (string tag in tags) {
+                if (tag == gamemode)
+                    configuredGamemodes.Add(tag);
+            }
         }
     }
 
     private void OnGUI() {
-        LoadGamemodes();
-
-        LoginUI();
+        LoadConfiguredGamemodes();
         EditorGUIUtility.labelWidth = 80;
         GUILayout.Label("Project Impulse Map Exporter", EditorStyles.largeLabel);
         GUILayout.Space(10);
 
+        if (profile == null) {
+            EditorGUILayout.HelpBox("Please select a mod profile as a the upload target.", MessageType.Info);
+        } else if (profile.modId > 0) {
+            EditorGUILayout.HelpBox(profile.editableModProfile.name.value + " will be updated as used as the upload target on the server.", MessageType.Info);
+        } else {
+            EditorGUILayout.HelpBox(profile.editableModProfile.name.value + " will be created as a new profile on the server.", MessageType.Info);
+        }
+        profile = EditorGUILayout.ObjectField("Mod Profile", profile, typeof(ScriptableModProfile), false) as ScriptableModProfile;
+        if (profile)
+            mapName = profile.editableModProfile.name.value;
+        else
+            mapName = "";
 
-        if (showMapSettings = EditorGUILayout.Foldout(showMapSettings, "Map Settings")) MapSettings();
-        DrawUILine(Color.grey);
+        // if (showMapSettings = EditorGUILayout.Foldout(showMapSettings, "Map Settings")) MapSettings();
+        // DrawUILine(Color.grey);
 
-
-        if (showSceneSettings = EditorGUILayout.Foldout(showSceneSettings, "Scene Settings")) SceneSettings();
+        SceneSettings();
         DrawUILine(Color.grey);
 
         if (showExportSettings = EditorGUILayout.Foldout(showExportSettings, "Export Settings")) ExportSettings();
         DrawUILine(Color.grey);
 
-        if (GUILayout.Button("Build Windows", GUILayout.Height(40))) {
+        bool containsMapTag = false;
+        if (profile) {
+            containsMapTag = profile.editableModProfile.tags.value.Contains("Map");
+        }
+        if (profile == null)
+            EditorGUILayout.HelpBox("Please select a mod profile before building.", MessageType.Warning);
 
-            if (!ValidateFeilds() || !ValidateScene())
-                return;
+        else if (configuredGamemodes.Count == 0)
+            EditorGUILayout.HelpBox("One Gamemode must be selected in your mod profile. Goto yourmodprofile>Tags and under 'Gamemodes' set at least one to true", MessageType.Warning);
 
-            CreateConfig(configuredGamemodes);
-            ExportWindows();
+        bool canBuld = profile != null && configuredGamemodes.Count != 0;
+        using (new EditorGUI.DisabledScope(!canBuld)) {
+            if (GUILayout.Button("Build Windows", GUILayout.Height(40))) {
+                if (!ValidateFeilds() || !ValidateScene())
+                    return;
 
-            if (openAfterExport)
-                EditorUtility.RevealInFinder(exportPath);
+                CreateConfig();
+                ExportWindows();
+
+                if (openAfterExport)
+                    EditorUtility.RevealInFinder(exportPath);
+            }
+
+            if (GUILayout.Button("Build Android", GUILayout.Height(40))) {
+                if (!ValidateFeilds() || !ValidateScene())
+                    return;
+
+                CreateConfig();
+                ExportAndroid();
+
+                if (openAfterExport)
+                    EditorUtility.RevealInFinder(exportPath);
+            }
         }
 
-        if (GUILayout.Button("Build Android", GUILayout.Height(40))) {
+        DrawUILine(Color.grey);
 
-            if (!ValidateFeilds() || !ValidateScene())
-                return;
-
-            CreateConfig(configuredGamemodes);
-            ExportAndroid();
-
-            if (openAfterExport)
-                EditorUtility.RevealInFinder(exportPath);
+        string platformValidation = ValidatePlatforms();
+        if (profile != null) {
+            if (this.user == null)
+                EditorGUILayout.HelpBox("Please sign into your mod.io account in order to publish", MessageType.Info);
+            if (platformValidation != "")
+                EditorGUILayout.HelpBox("You must build for " + platformValidation + " in order to publish.", MessageType.Warning);
+            if (!containsMapTag)
+                EditorGUILayout.HelpBox("The 'Map' tag must be set in your mod profile. Goto yourmodprofile>Tags and under 'Mod Type' set 'Map' to true.", MessageType.Warning);
         }
 
-        if (GUILayout.Button("Upload Map", GUILayout.Height(40))) {
 
-            if (!ValidateFeilds() || !ValidateScene())
-                return;
+        LoginUI();
 
-            UploadMap();
+        using (new EditorGUI.DisabledScope(this.user == null || platformValidation != "" || !containsMapTag)) {
+            if (GUILayout.Button("Upload Map", GUILayout.Height(40))) {
+                UploadToServer();
+            }
         }
+
     }
 
     protected virtual void Update() {
-        if (user != null && user.id != LocalUser.Profile.id) {
-            user = null;
+        if (this.user != null &&
+        LocalUser.Profile != null &&
+        this.user.id != LocalUser.Profile.id) {
+            this.user = null;
             Repaint();
         }
     }
@@ -170,42 +215,41 @@ public class ProjectImpulseMapExporter : EditorWindow {
         EditorGUILayout.EndHorizontal();
     }
 
-    private void MapSettings() {
-        mapName = EditorGUILayout.TextField("Map Name: ", mapName);
-        EditorPrefs.SetString("MapName", mapName);
+    // private void MapSettings() {
+    //     mapName = EditorGUILayout.TextField("Map Name: ", mapName);
+    //     EditorPrefs.SetString("MapName", mapName);
 
-        EditorGUIUtility.labelWidth = 200;
+    //     EditorGUIUtility.labelWidth = 200;
 
-        if (showConfiguredGamemodes = EditorGUILayout.Foldout(showConfiguredGamemodes, "Configured Gamemodes")) {
-            foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-                allGamemodes[g.Key] = EditorGUILayout.Toggle(g.Key, allGamemodes[g.Key]);
+    //     if (showConfiguredGamemodes = EditorGUILayout.Foldout(showConfiguredGamemodes, "Configured Gamemodes")) {
+    //         foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
+    //             allGamemodes[g.Key] = EditorGUILayout.Toggle(g.Key, allGamemodes[g.Key]);
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("All", GUILayout.Width(100)))
-                SelectAllGamemodes();
-            if (GUILayout.Button("None", GUILayout.Width(100)))
-                DeselectAllGamemodes();
-            GUILayout.EndHorizontal();
-        }
-    }
+    //         GUILayout.BeginHorizontal();
+    //         if (GUILayout.Button("All", GUILayout.Width(100)))
+    //             SelectAllGamemodes();
+    //         if (GUILayout.Button("None", GUILayout.Width(100)))
+    //             DeselectAllGamemodes();
+    //         GUILayout.EndHorizontal();
+    //     }
+    // }
 
-    private void SelectAllGamemodes() {
-        foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-            allGamemodes[g.Key] = true;
-    }
+    // private void SelectAllGamemodes() {
+    //     foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
+    //         allGamemodes[g.Key] = true;
+    // }
 
-    private void DeselectAllGamemodes() {
-        foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-            allGamemodes[g.Key] = false;
-    }
+    // private void DeselectAllGamemodes() {
+    //     foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
+    //         allGamemodes[g.Key] = false;
+    // }
 
     private void SceneSettings() {
         GUILayout.BeginHorizontal();
         scenePath = EditorSceneManager.GetActiveScene().path;
-        GUILayout.Label("Scene Path: " + scenePath, EditorStyles.whiteLabel);
+        GUILayout.Label("Scene Path: " + scenePath, EditorStyles.label);
         GUILayout.EndHorizontal();
     }
-
 
     private void ExportSettings() {
         basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Mods");
@@ -219,7 +263,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
         EditorPrefs.SetBool("OpenAfterExport", openAfterExport);
 
         GUILayout.Space(10);
-        GUILayout.Label("Export path: " + exportPath, EditorStyles.whiteLabel);
+        GUILayout.Label("Export path: " + exportPath, EditorStyles.label);
     }
 
     private bool ValidateFeilds() {
@@ -242,7 +286,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private bool ValidateScene() {
-        configuredGamemodes = new List<string>();
+        LoadConfiguredGamemodes();
         UnityEngine.Object[] gamemodeValidators = Resources.LoadAll("GamemodeValidators");
         foreach (UnityEngine.Object validatorObject in gamemodeValidators) {
 
@@ -250,7 +294,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
             go.AddComponent(Type.GetType(validatorObject.name));
             Validator validator = go.GetComponent<Validator>();
             string gamemode = validator.GetGamemode();
-            if (gamemode != "" && allGamemodes[gamemode] == false) {
+            if (gamemode != "" && !configuredGamemodes.Contains(gamemode)) {
                 DestroyImmediate(go);
                 continue;
             }
@@ -275,6 +319,32 @@ public class ProjectImpulseMapExporter : EditorWindow {
             DestroyImmediate(go);
         }
         return true;
+    }
+
+    private string ValidatePlatforms() {
+        if (!Directory.Exists(exportPath))
+            return "Windows";
+
+        string[] folders = Directory.GetDirectories(exportPath);
+        if (folders.Length == 0)
+            return "Windows";
+
+        foreach (string platform in configuredPlatforms) {
+            bool isPlatformBuilt = false;
+            foreach (string folder in folders) {
+                if (platform == "Windows" && Path.GetFileName(folder) == "StandaloneWindows64") {
+                    isPlatformBuilt = true;
+                    break;
+                } else if (platform == "Android" && Path.GetFileName(folder) == "Android") {
+                    isPlatformBuilt = true;
+                    break;
+                }
+            }
+
+            if (!isPlatformBuilt)
+                return platform;
+        }
+        return "";
     }
 
     private void DisplayError(string title, string error) {
@@ -340,7 +410,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
     }
 
-    private void CreateConfig(List<string> gamemodes) {
+    private void CreateConfig() {
+
         if (!File.Exists(exportPath))
             CreateFolder(exportPath);
 
@@ -351,22 +422,89 @@ public class ProjectImpulseMapExporter : EditorWindow {
         configContent += "name=" + mapName + "\n";
         configContent += "// gamemodes is a list of gamemodes that this map is configured for\n";
         configContent += "gamemodes=";
-        for (int i = 0; i < gamemodes.Count; i++)
-            configContent += gamemodes[i] + (i == gamemodes.Count - 1 ? "\n" : ",");
+
+        LoadConfiguredGamemodes();
+
+        for (int i = 0; i < configuredGamemodes.Count; i++)
+            configContent += configuredGamemodes[i] + (i == configuredGamemodes.Count - 1 ? "\n" : ",");
 
         File.WriteAllText(FormatPath(exportPath + "/" + mapName + "Config.cfg"), configContent);
     }
 
-    private void UploadMap() {
-        // EditableModfile modBuildInformation = new EditableModfile();
-        // modBuildInformation.version.value = "1.0.0";
-        // modBuildInformation.version.isDirty = true;
+    protected virtual void UploadToServer() {
+        isAwaitingServerResponse = true;
 
-        // ModManager.UploadModBinaryDirectory(modId,
-        //                                     modBuildInformation,
-        //                                     true, // set as the current build
-        //                                     (modfile) => OnUploaded(modfile),
-        //                                     (e) => OnError(e));
+        string profileFilePath = AssetDatabase.GetAssetPath(profile);
+
+        Action<WebRequestError> onSubmissionFailed = (e) => {
+            EditorUtility.DisplayDialog("Upload Failed",
+                                        "Failed to update the mod profile on the server.\n"
+                                        + e.displayMessage,
+                                        "Close");
+
+            isAwaitingServerResponse = false;
+            Repaint();
+        };
+
+        if (profile.modId > 0) {
+            ModManager.SubmitModChanges(profile.modId,
+                                        profile.editableModProfile,
+                                        (m) => ModProfileSubmissionSucceeded(m, profileFilePath),
+                                        onSubmissionFailed);
+        } else {
+            ModManager.SubmitNewMod(profile.editableModProfile,
+                                    (m) => ModProfileSubmissionSucceeded(m, profileFilePath),
+                                    onSubmissionFailed);
+        }
+    }
+
+    private void ModProfileSubmissionSucceeded(ModProfile updatedProfile,
+                                                   string profileFilePath) {
+        if (updatedProfile == null) {
+            isAwaitingServerResponse = false;
+            return;
+        }
+
+
+        // Update ScriptableModProfile
+        profile.modId = updatedProfile.id;
+        profile.editableModProfile = EditableModProfile.CreateFromProfile(updatedProfile);
+        EditorUtility.SetDirty(profile);
+        AssetDatabase.SaveAssets();
+
+        // Upload Build
+        if (Directory.Exists(exportPath)) {
+            Action<WebRequestError> onSubmissionFailed = (e) => {
+                EditorUtility.DisplayDialog("Upload Failed",
+                                            "Failed to upload the mod build to the server.\n"
+                                            + e.displayMessage,
+                                            "Close");
+
+                isAwaitingServerResponse = false;
+                Repaint();
+
+            };
+
+            ModManager.UploadModBinaryDirectory(profile.modId,
+                                                buildProfile,
+                                                exportPath,
+                                                true,
+                                                mf => NotifySubmissionSucceeded(updatedProfile.name,
+                                                                                updatedProfile.profileURL),
+                                                onSubmissionFailed);
+
+        } else {
+            NotifySubmissionSucceeded(updatedProfile.name, updatedProfile.profileURL);
+        }
+    }
+
+    private void NotifySubmissionSucceeded(string modName, string modProfileURL) {
+        EditorUtility.DisplayDialog("Submission Successful",
+                                    modName + " was successfully updated on the server."
+                                    + "\nView the changes here: " + modProfileURL,
+                                    "Close");
+        isAwaitingServerResponse = false;
+        Repaint();
     }
 
     private void DeleteFolder(string path) {

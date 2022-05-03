@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08bcc501c4f064af49b6bfc29586632b, type: 3}
+  m_Name: ExampleMap
+  m_EditorClassIdentifier: 
+  modId: 2017285
+  editableModProfile:
+    status:
+      value: 1
+      isDirty: 0
+    visibility:
+      value: 1
+      isDirty: 0
+    name:
+      value: Example Map
+      isDirty: 0
+    nameId:
+      value: examplemap
+      isDirty: 0
+    summary:
+      value: ExampleMap
+      isDirty: 0
+    descriptionAsHTML:
+      value: ExampleMap
+      isDirty: 0
+    homepageURL:
+      value: 
+      isDirty: 0
+    tags:
+      value:
+      - Elimination
+      - Free For All
+      - Map
+      - Team Death Match
+      isDirty: 0
+    metadataBlob:
+      value: ExampleMap
+      isDirty: 0
+    metadataKVPs:
+      value: []
+      isDirty: 0
+    logoLocator:
+      value:
+        fileName: projectimpulse-screenshot3.png
+        url: https://image.modcdn.io/mods/9f76/2017285/projectimpulse-screenshot3.png
+      isDirty: 0
+    youTubeURLs:
+      value: []
+      isDirty: 0
+    sketchfabURLs:
+      value: []
+      isDirty: 0
+    galleryImageLocators:
+      value: []
+      isDirty: 0
