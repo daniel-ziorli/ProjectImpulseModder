@@ -368,7 +368,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     void ExportLinux() {
-        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneOSX);
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneLinux64);
         EditorUserBuildSettings.selectedStandaloneTarget = BuildTarget.StandaloneOSX;
         BuildAddressable();
     }
