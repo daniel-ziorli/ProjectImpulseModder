@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Build;
@@ -112,8 +113,18 @@ public class ProjectImpulseMapExporter : EditorWindow {
         else
             mapName = "";
 
-        // if (showMapSettings = EditorGUILayout.Foldout(showMapSettings, "Map Settings")) MapSettings();
-        // DrawUILine(Color.grey);
+        using(new EditorGUI.DisabledScope(profile == null)) {
+            if (GUILayout.Button("Add Thumbnail", GUILayout.Height(20))) {
+                if (Camera.allCameras.Length == 0) {
+                    GameObject cam = new GameObject("ThumbnailCamera");
+                    cam.AddComponent<Camera>();
+                }
+                string screenshotPath = Screenshot();
+                profile.editableModProfile.logoLocator.value.fileName = Path.GetFileName(screenshotPath);
+                profile.editableModProfile.logoLocator.value.url = screenshotPath;
+                AssetDatabase.Refresh();
+            }
+        }
 
         SceneSettings();
         DrawUILine(Color.grey);
@@ -168,7 +179,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
                 EditorGUILayout.HelpBox("The 'Map' tag must be set in your mod profile. Goto yourmodprofile>Tags and under 'Mod Type' set 'Map' to true.", MessageType.Warning);
         }
 
-
         LoginUI();
 
         using (new EditorGUI.DisabledScope(this.user == null || platformValidation != "" || !containsMapTag)) {
@@ -213,35 +223,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
         EditorGUILayout.EndHorizontal();
     }
 
-    // private void MapSettings() {
-    //     mapName = EditorGUILayout.TextField("Map Name: ", mapName);
-    //     EditorPrefs.SetString("MapName", mapName);
-
-    //     EditorGUIUtility.labelWidth = 200;
-
-    //     if (showConfiguredGamemodes = EditorGUILayout.Foldout(showConfiguredGamemodes, "Configured Gamemodes")) {
-    //         foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-    //             allGamemodes[g.Key] = EditorGUILayout.Toggle(g.Key, allGamemodes[g.Key]);
-
-    //         GUILayout.BeginHorizontal();
-    //         if (GUILayout.Button("All", GUILayout.Width(100)))
-    //             SelectAllGamemodes();
-    //         if (GUILayout.Button("None", GUILayout.Width(100)))
-    //             DeselectAllGamemodes();
-    //         GUILayout.EndHorizontal();
-    //     }
-    // }
-
-    // private void SelectAllGamemodes() {
-    //     foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-    //         allGamemodes[g.Key] = true;
-    // }
-
-    // private void DeselectAllGamemodes() {
-    //     foreach (KeyValuePair<string, bool> g in allGamemodes.ToList())
-    //         allGamemodes[g.Key] = false;
-    // }
-
     private void SceneSettings() {
         GUILayout.BeginHorizontal();
         scenePath = EditorSceneManager.GetActiveScene().path;
@@ -284,9 +265,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private bool ValidateScene() {
-        if (Camera.allCameras.Length > 0) {
-            DisplayError("Error Scene Contains Active Camera", "Cameras are not permitted. Please delete or disable all cameras in your scene before building.");
-            return false;
+        foreach(Camera camera in Camera.allCameras) {
+            camera.gameObject.SetActive(false);
         }
 
         LoadConfiguredGamemodes();
@@ -522,6 +502,31 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
     private string FormatPath(string path) {
         return path.Replace(" ", "").Replace(@"\", "/");
+    }
+
+    private string Screenshot() {
+        var timestamp = System.DateTime.Now;
+        var stampString = string.Format("_{0}-{1:00}-{2:00}_{3:00}-{4:00}-{5:00}", timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second);
+        string screenshotFolder = Application.dataPath + "/Thumbnails/" + mapName + "/";
+        if (Directory.Exists(screenshotFolder))
+            Directory.Delete(screenshotFolder, true);
+        
+        Directory.CreateDirectory(screenshotFolder);
+        string screenshotPath = screenshotFolder + "/Screenshot" + stampString + ".png";
+
+        RenderTexture screenTexture = new RenderTexture(1920, 1080, 16);
+        Camera.allCameras[0].targetTexture = screenTexture;
+        RenderTexture.active = screenTexture;
+        Camera.allCameras[0].Render();
+        Texture2D renderedTexture = new Texture2D(1920, 1080);
+        renderedTexture.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+        RenderTexture.active = null;
+        byte[] byteArray = renderedTexture.EncodeToPNG();
+        System.IO.File.WriteAllBytes(screenshotPath, byteArray);
+
+        AssetDatabase.Refresh();
+
+        return screenshotPath;
     }
 
     public static void DrawUILine(Color color, int thickness = 2, int padding = 10) {
