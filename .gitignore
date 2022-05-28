@@ -77,3 +77,7 @@ crashlytics-build.properties
 /[Aa]ssets/QuickOutline
 /[Aa]ssets/Editor/x64/Bakery
 /[Aa]ssets/Everything Bundle
+Assets/Settings/BakeryProjectSettings.asset
+Assets/BakeryLightmaps/
+*.meta
+bakery_times.log
