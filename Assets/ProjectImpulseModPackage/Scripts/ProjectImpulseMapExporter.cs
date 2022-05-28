@@ -51,7 +51,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
         if (LocalUser.AuthenticationState == AuthenticationState.ValidToken) {
             ModManager.GetAuthenticatedUserProfile((userProfile) => {
-                this.user = userProfile;
+                user = userProfile;
                 Repaint();
             },
             null);
@@ -65,8 +65,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     protected virtual void OnUserLogin(UserProfile userProfile) {
-        this.OnDisable();
-        this.OnEnable();
+        OnDisable();
+        OnEnable();
     }
 
     void LoadConfiguredGamemodes() {
@@ -180,9 +180,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     protected virtual void Update() {
-        if (this.user != null &&
-        LocalUser.Profile != null &&
-        this.user.id != LocalUser.Profile.id) {
+        if (user == null || LocalUser.Profile == null || LocalUser.Profile == null || user.id != LocalUser.Profile.id || user.username.Length == 0) {
             this.user = null;
             Repaint();
         }
