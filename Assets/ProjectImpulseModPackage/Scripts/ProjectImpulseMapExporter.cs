@@ -286,6 +286,11 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private bool ValidateScene() {
+        if (Camera.allCameras.Length > 0) {
+            DisplayError("Error Scene Contains Active Camera", "Cameras are not permitted. Please delete or disable all cameras in your scene before building.");
+            return false;
+        }
+
         LoadConfiguredGamemodes();
         UnityEngine.Object[] gamemodeValidators = Resources.LoadAll("GamemodeValidators");
         foreach (UnityEngine.Object validatorObject in gamemodeValidators) {
