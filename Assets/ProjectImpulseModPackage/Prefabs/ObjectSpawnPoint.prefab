@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1675056625240556128}
   - component: {fileID: 3177956148149306919}
   m_Layer: 0
-  m_Name: WeaponSpawnPoint
+  m_Name: ObjectSpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 4162164826716764455, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0

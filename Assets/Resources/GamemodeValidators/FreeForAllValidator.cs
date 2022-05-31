@@ -13,7 +13,7 @@ public class FreeForAllValidator : Validator {
         if (GetPlayerSpawnPoints().Length < 20)
             AddWarningMessage("Warning Not Enough Player Spawn Points", gamemode + "\nYou have less than 20 spawn points in your scene we recomend at least 20 for Free For All.");
 
-        if (GetWeaponSpawnPoints().Length == 0)
-            AddWarningMessage("Warning No Weapon Spawn Points", gamemode + "\nYou have no weapon spawners in your scene. If you would like weapons in your level go to the Project Impulse Mod Package > Prefabs and add a 'WeaponSpawnPoint' to your scene.");
+        if (GetObjectSpawnPoints().Length == 0)
+            AddWarningMessage("Warning No Object Spawn Points", gamemode + "\nYou have no object spawners in your scene. If you would like objects in your level go to the Project Impulse Mod Package > Prefabs and add a 'ObjectSpawnPoint' to your scene.");
     }
 }

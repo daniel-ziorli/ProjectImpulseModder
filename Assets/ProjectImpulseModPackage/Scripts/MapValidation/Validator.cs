@@ -51,8 +51,8 @@ public abstract class Validator : MonoBehaviour {
         return FindObjectsOfType<ProjectImpulsePlayerSpawnPoint>();
     }
 
-    public ProjectImpulseWeaponSpawner[] GetWeaponSpawnPoints() {
-        return FindObjectsOfType<ProjectImpulseWeaponSpawner>();
+    public ProjectImpulseObjectSpawner[] GetObjectSpawnPoints() {
+        return FindObjectsOfType<ProjectImpulseObjectSpawner>();
     }
 
 }

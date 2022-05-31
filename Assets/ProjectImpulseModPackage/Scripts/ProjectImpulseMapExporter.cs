@@ -266,7 +266,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
 
     private bool ValidateScene() {
         foreach(Camera camera in Camera.allCameras) {
-            camera.gameObject.SetActive(false);
+            DestroyImmediate(camera.gameObject);
         }
 
         LoadConfiguredGamemodes();
