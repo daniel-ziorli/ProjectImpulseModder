@@ -12,6 +12,7 @@ using System.IO;
 using System;
 using ModIO;
 using ModIO.EditorCode;
+using Mirror;
 
 public class ProjectImpulseMapExporter : EditorWindow {
     string mapName = "";
@@ -113,7 +114,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
         else
             mapName = "";
 
-        using(new EditorGUI.DisabledScope(profile == null)) {
+        using (new EditorGUI.DisabledScope(profile == null)) {
             if (GUILayout.Button("Add Thumbnail", GUILayout.Height(20))) {
                 if (Camera.allCameras.Length == 0) {
                     GameObject cam = new GameObject("ThumbnailCamera");
@@ -265,9 +266,6 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private bool ValidateScene() {
-        foreach(Camera camera in Camera.allCameras) {
-            DestroyImmediate(camera.gameObject);
-        }
 
         LoadConfiguredGamemodes();
         UnityEngine.Object[] gamemodeValidators = Resources.LoadAll("GamemodeValidators");
@@ -510,7 +508,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
         string screenshotFolder = Application.dataPath + "/Thumbnails/" + mapName + "/";
         if (Directory.Exists(screenshotFolder))
             Directory.Delete(screenshotFolder, true);
-        
+
         Directory.CreateDirectory(screenshotFolder);
         string screenshotPath = screenshotFolder + "/Screenshot" + stampString + ".png";
 

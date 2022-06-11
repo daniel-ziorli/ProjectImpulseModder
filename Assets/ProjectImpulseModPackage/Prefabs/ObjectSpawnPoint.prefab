@@ -64,8 +64,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  weaponIds: 0300000004000000
-  weaponPrefabs: []
-  spawnOnRoundStart: 1
-  weaponRespawnTime: 30
-  weaponDespawnTime: 30
+  spawnOnStart: 1
+  continuousSpawning: 0
+  objectRespawnTime: 30
+  objectDespawnTime: 30
+  spawnableObjectIds: 0100000002000000
