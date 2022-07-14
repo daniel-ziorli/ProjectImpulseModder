@@ -232,7 +232,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private void ExportSettings() {
-        basePath = FormatPath(UnityEngine.Application.persistentDataPath + "/Mods");
+        basePath = FormatPath(UnityEngine.Application.dataPath + "/Export");
         exportPath = FormatPath(basePath + "/" + mapName);
 
         if (GUILayout.Button("Open Export Folder"))
@@ -379,13 +379,13 @@ public class ProjectImpulseMapExporter : EditorWindow {
         AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
             AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
             "Local.LoadPath",
-            "{UnityEngine.Application.persistentDataPath}/Mods/{LOCAL_FILE_NAME}/" + EditorUserBuildSettings.selectedStandaloneTarget
+            "{LOCAL_MOD_PATH}"
         );
 
         AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
             AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
             "Local.BuildPath",
-            Application.persistentDataPath + "/Mods/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+            Application.dataPath + "/Export/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
         );
         AddressableAssetSettings.CleanPlayerContent(AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilder);
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
