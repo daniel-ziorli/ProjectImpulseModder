@@ -149,6 +149,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
                 if (!ValidateFeilds() || !ValidateScene())
                     return;
 
+                if (Directory.Exists(exportPath))
+                    DeleteFolder(exportPath);
                 CreateConfig();
                 ExportWindows();
 
@@ -232,7 +234,7 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private void ExportSettings() {
-        basePath = FormatPath(UnityEngine.Application.dataPath + "/Export");
+        basePath = FormatPath(Application.persistentDataPath + "/Export");
         exportPath = FormatPath(basePath + "/" + mapName);
 
         if (GUILayout.Button("Open Export Folder"))
@@ -361,6 +363,8 @@ public class ProjectImpulseMapExporter : EditorWindow {
     }
 
     private void BuildAddressable(object obj = null) {
+        if (Directory.Exists(Application.persistentDataPath + "/Export/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget))
+            DeleteFolder(Application.persistentDataPath + "/Export/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget);
         var group = AddressableAssetSettingsDefaultObject.Settings.FindGroup("Default Local Group");
         var guid = AssetDatabase.AssetPathToGUID(scenePath);
         if (group == null || guid == null)
@@ -385,8 +389,9 @@ public class ProjectImpulseMapExporter : EditorWindow {
         AddressableAssetSettingsDefaultObject.Settings.profileSettings.SetValue(
             AddressableAssetSettingsDefaultObject.Settings.activeProfileId,
             "Local.BuildPath",
-            Application.dataPath + "/Export/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
+            Application.persistentDataPath + "/Export/" + FormatPath(mapName) + "/" + EditorUserBuildSettings.selectedStandaloneTarget
         );
+
         AddressableAssetSettings.CleanPlayerContent(AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilder);
         AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
     }

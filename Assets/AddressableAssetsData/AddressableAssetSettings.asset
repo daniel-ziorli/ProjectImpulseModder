@@ -57,9 +57,9 @@ MonoBehaviour:
       - m_Id: ef57a2c0616352f48ba8f8b0ec2874c1
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: a19be5840603af04a88979b91c55b259
-        m_Value: C:/Users/kanno/AppData/LocalLow/DonionTech/ProjectImpulse/Mods/Level2.1/StandaloneWindows64
+        m_Value: C:/Users/kanno/Documents/GitHub/ProjectImpulseModder/Assets/Export/Level2.1/StandaloneWindows64
       - m_Id: a2da803d9e6f92046a0ed2f92deca4b1
-        m_Value: '{UnityEngine.Application.persistentDataPath}/Mods/{LOCAL_FILE_NAME}/StandaloneWindows64'
+        m_Value: '{UnityEngine.Application.persistentDataPath}/{LOCAL_MOD_PATH}/StandaloneWindows64'
       - m_Id: adcae911480da0b4fa48dcc78bfdd754
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: 2d134ef80099bc947ac7b9f2f9e9d015
