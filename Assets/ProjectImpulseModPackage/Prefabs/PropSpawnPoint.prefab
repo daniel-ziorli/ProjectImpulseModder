@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1675056625240556131
+--- !u!1 &7878039602764192201
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,38 +8,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1675056625240556130}
-  - component: {fileID: 1675056625240556128}
-  - component: {fileID: 3177956148149306919}
+  - component: {fileID: 1100438761517399201}
+  - component: {fileID: 7714918086655561701}
+  - component: {fileID: 8784284086299330045}
   m_Layer: 0
-  m_Name: ObjectSpawnPoint
+  m_Name: PropSpawnPoint
   m_TagString: Untagged
-  m_Icon: {fileID: 4162164826716764455, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1675056625240556130
+--- !u!4 &1100438761517399201
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675056625240556131}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.6, y: 0, z: 2.18}
+  m_GameObject: {fileID: 7878039602764192201}
+  m_LocalRotation: {x: 0, y: 0.70155627, z: 0, w: 0.71261406}
+  m_LocalPosition: {x: -14.393, y: -23.42, z: -0.233}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1675056625240556128
+  m_LocalEulerAnglesHint: {x: 0, y: 89.104, z: 0}
+--- !u!114 &7714918086655561701
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675056625240556131}
+  m_GameObject: {fileID: 7878039602764192201}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
@@ -48,15 +48,15 @@ MonoBehaviour:
   sceneId: 0
   serverOnly: 1
   visible: 0
-  m_AssetId: d90354a737b53dc43a858d7a65d7a133
+  m_AssetId: 7b646884692847a4d9afe25b40cad73f
   hasSpawned: 0
---- !u!114 &3177956148149306919
+--- !u!114 &8784284086299330045
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675056625240556131}
+  m_GameObject: {fileID: 7878039602764192201}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6223d5a4df9712f47995b573b31c9bc0, type: 3}
@@ -66,6 +66,6 @@ MonoBehaviour:
   syncInterval: 0.1
   spawnOnStart: 1
   continuousSpawning: 0
-  objectRespawnTime: 30
-  objectDespawnTime: 30
-  spawnableObjectIds: 0100000002000000
+  objectRespawnTime: 0
+  objectDespawnTime: 0
+  spawnableObjectIds: 
