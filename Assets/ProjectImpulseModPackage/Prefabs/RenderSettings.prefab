@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4902617943547181728}
   - component: {fileID: 1882795184671738391}
   m_Layer: 0
-  m_Name: SkyBox
+  m_Name: RenderSettings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
